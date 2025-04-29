@@ -1,0 +1,12 @@
+com\midas\qa\testcases\HODHomeTest.class
+com\midas\qa\testcases\InventorySCMFieldsTest.class
+com\midas\qa\testcases\SearchResultPageTest.class
+com\midas\qa\testcases\HomePageTest.class
+com\midas\qa\testcases\DashBoardTest.class
+com\midas\qa\testcases\SearchPageTest.class
+com\midas\qa\testcases\DataOfMaterialNoTest.class
+com\midas\qa\testcases\RequestPreviewPageTest.class
+com\midas\qa\testcases\RequestPageTest.class
+com\midas\qa\testcases\ReqestCreationFlowTest.class
+com\midas\qa\testcases\LoginPageTest.class
+com\midas\qa\testcases\OAuthAPITest.class

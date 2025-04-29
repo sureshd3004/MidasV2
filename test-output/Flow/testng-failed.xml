@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Failed suite [Flow]" guice-stage="DEVELOPMENT">
+  <listeners>
+    <listener class-name="com.midas.qa.util.ExtentReportListener"/>
+  </listeners>
+  <test thread-count="5" name="Flow_Test(failed)">
+    <classes>
+      <class name="com.midas.qa.testcases.HomePageTest">
+        <methods>
+          <include name="setUp"/>
+          <include name="verifyHomePageTitleTest"/>
+          <include name="tearDown"/>
+          <include name="beforeSuite"/>
+          <include name="afterSuite"/>
+        </methods>
+      </class> <!-- com.midas.qa.testcases.HomePageTest -->
+    </classes>
+  </test> <!-- Flow_Test(failed) -->
+</suite> <!-- Failed suite [Flow] -->
