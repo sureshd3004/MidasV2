@@ -1,21 +1,22 @@
 package com.midas.requestor.testcases;
 
 import static org.testng.Assert.assertEquals;
-import java.io.IOException;
+
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.testng.asserts.SoftAssert;
+
 import com.midas.qa.base.TestBase;
-import com.midas.qa.util.FileUtil;
-import com.midas.requestor.pages.HomePageRequestor;
+import com.midas.requestor.pages.VendorRequestPageRequestor;
 import com.midas.requestor.pages.LoginPageRequestor;
 
 
 public class RequestorLoginPageTest extends TestBase{
 	
-	LoginPageRequestor loginPage;
-	HomePageRequestor homePage;
+	LoginPageRequestor loginPageRequestor;
+	VendorRequestPageRequestor homePage;
+	SoftAssert softAssert;
 	
 	public RequestorLoginPageTest(){
 		super();
@@ -24,36 +25,44 @@ public class RequestorLoginPageTest extends TestBase{
 	@BeforeMethod
 	public void setUp(){
 		initialization();
-		loginPage = new LoginPageRequestor();	
+		loginPageRequestor = new LoginPageRequestor();	
+		softAssert = new SoftAssert();
 	}
 	
-	@Test(priority=1,enabled = false)
+	@Test(priority=1)
 	public void loginPageTitleTest(){
-		String title = loginPage.validateLoginPageTitle();
-		Assert.assertEquals(title, "HomePageRequestor");
+		String title = loginPageRequestor.validateLoginPageTitle();
+		Assert.assertEquals(title, "Sign-in");
 	}
 	
-	@Test(priority=2,enabled = true)
-	public void LogoImageTest(){
-		boolean logo = loginPage.validateImage();
-		Assert.assertTrue(logo);		
+	@Test()
+	public void LogosTest(){
+		boolean midaslogo = loginPageRequestor.validateMidasLogo();
+		softAssert.assertTrue(midaslogo);	
+		
+		boolean clientlogo = loginPageRequestor.validateClientLogo();
+		softAssert.assertTrue(clientlogo);	
+		
+		softAssert.assertTrue(loginPageRequestor.validateInfoplusLogo());
+		softAssert.assertAll();
 	}
-	
-	@Test(dataProvider = "getloginData")
-	public void loginFunctionTestWithUserID(String userName,String password){  
-		String ScessMesg = loginPage.useridlogin(userName, password);  			
-		assertEquals(ScessMesg, "Login Successfully");
+	@Test()
+	public void TextContentTest() {
+		softAssert.assertEquals(true, loginPageRequestor.verifyMidasContent().length()>200);
+		softAssert.assertEquals(true, loginPageRequestor.verifyClientContent().length()>200);
+		softAssert.assertAll();
 	}
-    
-	@Test(dataProvider = "getloginData")
- 	public void login(String userName,String password) {  	
- 		homePage = loginPage.userLogin(userName, password);  	
- 	}
 
-	@DataProvider(name = "getloginData")
-	public Object[][] getloginData() throws IOException{
-		String sheetName = "login";		
-		String role = prop.getProperty("User");		
-		return FileUtil.getTestDataBasedColoumn(sheetName, role);
+	@Test()
+ 	public void loginRequestorTestWithSSO() throws InterruptedException {  	
+		loginPageRequestor.requestorSSOLogin( prop.getProperty("username"), prop.getProperty("password"));		
+ 		assertEquals(loginPageRequestor.verifyNotificationText("Successfully"), "Login Successfully");
+ 	}
+	
+	@Test(enabled = false)
+ 	public void RequestorSSOloginTest() throws InterruptedException {  	
+		loginPageRequestor.requestorSSOLogin(prop.getProperty("username"), "wrong password");  
+		assertEquals(false, null);
 	}
+	
 }

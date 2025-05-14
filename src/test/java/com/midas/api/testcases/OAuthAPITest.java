@@ -9,15 +9,16 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 
-//@Listeners({com.midas.qa.util.ExtentReportListener.class})
+@Listeners({com.midas.qa.util.ExtentReportListener.class})
 public class OAuthAPITest {
 
-	public static final String API_URI = "http://192.168.1.238/";
+	public static final String API_URI = "https://midasnv.infoplusmdm.com:8443/";
 
 	@Test(dependsOnMethods = "testLogInEndPoint",description = "return token for access & refreshToken")
 	public void testAccessTokenEndPoint() {
 
-		String API_END_POINT = "Gateway/authservice/refreshtoken";
+		String API_END_POINT = "authservice/refreshtoken";
+		
 		String accessToken = FileUtil.getValueFromJsonFile("accessToken");
 		String refreshToken = FileUtil.getValueFromJsonFile("refreshToken");   
 
@@ -26,8 +27,9 @@ public class OAuthAPITest {
 				"   \"RefreshToken\": \"" + refreshToken + "\"\n" +
 				"}";
 
-		Response response = com.midas.qa.util.APIRequestUtil.sendPostWithNoToken(API_URI + API_END_POINT, requestBody );
+		Response response = com.midas.qa.util.APIRequestUtil.sendPost(API_URI + API_END_POINT, requestBody );
 		Assert.assertEquals(response.getStatusCode(), 200);
+		Assert.assertEquals(response.getContentType(), "application/json; charset=utf-8");
 		Assert.assertTrue(response.getTime() < 2000, "Response time is greater than 2000ms");
 		FileUtil.saveJsonToFile(response.asString());
 	
@@ -42,9 +44,9 @@ public class OAuthAPITest {
 				+ "    \"loginType\": \"\"  \r\n"
 				+ "}";
 
-		String API_END_POINT = "Gateway/authservice/midaslogin";
+		String API_END_POINT = "authservice/midaslogin";
 
-		Response response = com.midas.qa.util.APIRequestUtil.sendPostWithNoToken(API_URI + API_END_POINT, requestBody);
+		Response response = com.midas.qa.util.APIRequestUtil.sendPost(API_URI + API_END_POINT, requestBody);
 
 		Assert.assertEquals(response.getStatusCode(), 200);
 		Assert.assertTrue(response.getTime() < 2000, "Response time is greater than 2000ms");
@@ -65,8 +67,8 @@ public class OAuthAPITest {
 					"}";
 			String API_END_POINT = "Gateway/authservice/midaslogin";
 
-			Response response = com.midas.qa.util.APIRequestUtil.sendPostWithNoToken(API_URI + API_END_POINT, requestBody);
-		//	FileUtil.sendValueToExcel("SQL", "results" , "result" , injection+ requestBody+ API_END_POINT);
+			Response response = com.midas.qa.util.APIRequestUtil.sendPost(API_URI + API_END_POINT, requestBody);
+
 			FileUtil.logDataInTxt(injection, response, "SQL_Results.txt");
 			Assert.assertNotEquals(response.getStatusCode(), 500, "SQL Injection caused Server Error!");
 			Assert.assertFalse(response.asString().toLowerCase().contains("sql"), "Potential SQL error leaked in response!");
@@ -89,7 +91,7 @@ public class OAuthAPITest {
 
 			String API_END_POINT = "Gateway/authservice/midaslogin";
 
-			Response response = com.midas.qa.util.APIRequestUtil.sendPostWithNoToken(API_URI + API_END_POINT, requestBody);
+			Response response = com.midas.qa.util.APIRequestUtil.sendPost(API_URI + API_END_POINT, requestBody);
 			FileUtil.logDataInTxt(payload, response, "XSS_Results.txt");
 			// Assert no XSS reflected
 			Assert.assertFalse(response.getBody().asString().contains(payload), "Potential XSS vulnerability detected!");
@@ -108,9 +110,10 @@ public class OAuthAPITest {
 
 		String API_END_POINT = "api/auth/ssologin";
 
-		Response response = com.midas.qa.util.APIRequestUtil.sendPostWithNoToken(API_URI + API_END_POINT, requestBody);
+		Response response = com.midas.qa.util.APIRequestUtil.sendPost(API_URI + API_END_POINT, requestBody);
 
 		Assert.assertEquals(response.getStatusCode(), 200);
+		Assert.assertEquals(response.getContentType(), "application/json");
 		Assert.assertTrue(response.getTime() < 2000, "Response time is greater than 2000ms");
 	//  System.out.println(response.getBody().asString());
 
@@ -118,17 +121,17 @@ public class OAuthAPITest {
 	@Test(description = "GET request to give the user list")
 	public void testGetAllUserList() {
 
-		String API_END_POINT = "Gateway/authservice/userlist";
+		String API_END_POINT = "authservice/userlist";
         String key = FileUtil.getValueFromJsonFile("accessToken");
 		Response response = com.midas.qa.util.APIRequestUtil.sendGet(API_END_POINT,key); 
 		System.err.println(response.toString());
 		Assert.assertEquals(response.getStatusCode(), 200);
 		Assert.assertTrue(response.getTime() < 2000, "Response time is greater than 2000ms");     
 	}
-	@Test(description = "GET request to give the user type list",dependsOnMethods = "testAccessTokenEndPoint")
+	@Test(description = "GET request to give the user type list")
 	public void testGetUserTypeList() {
 
-		String API_END_POINT = "Gateway/authservice/usertypelist";
+		String API_END_POINT = "authservice/usertypelist";
         String key = FileUtil.getValueFromJsonFile("accessToken");
 		Response response = com.midas.qa.util.APIRequestUtil.sendGet(API_END_POINT,key); 
 		System.err.println(response.toString());

@@ -5,46 +5,40 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import com.midas.qa.base.TestBase;
-import com.midas.requestor.pages.HomePageRequestor;
-import com.midas.requestor.pages.LoginPageRequestor;
-
+import com.midas.technical.pages.VendorRequestTechnical;
+import com.midas.technical.pages.LoginPageTechnical;
 
 public class TechnicalLoginPageTest extends TestBase{
-	
-	LoginPageRequestor loginPage;
-	HomePageRequestor homePage;
-	
+
+	LoginPageTechnical loginPageTechnical;
+	VendorRequestTechnical homePageTechnical;
+
 	public TechnicalLoginPageTest(){
 		super();
 	}
-	
+
 	@BeforeMethod
 	public void setUp(){
 		initialization();
-		loginPage = new LoginPageRequestor();	
+		loginPageTechnical = new LoginPageTechnical();	
 	}
-	
-	@Test(priority=1,enabled = false)
-	public void loginPageTitleTest(){
-		String title = loginPage.validateLoginPageTitle();
-		Assert.assertEquals(title, "HomePageRequestor");
+
+	@Test()
+	public void loginTechnicalTestWithUserID(){  
+		loginPageTechnical.technicalUserEmaillogin(prop.getProperty("username"), prop.getProperty("password"));			
+		assertEquals(loginPageTechnical.verifyNotificationText("Successfully"), "Login Successfully");
 	}
-	
-	@Test(priority=2,enabled = true)
-	public void LogoImageTest(){
-		boolean logo = loginPage.validateImage();
-		Assert.assertTrue(logo);		
+
+	@Test()
+	public void loginTechnicalTestWithInvalidUserID(){  						
+		loginPageTechnical.technicalUserEmaillogin("kalaiyarasan.r@in.com", prop.getProperty("password"));
+		Assert.assertEquals(loginPageTechnical.verifyNotificationText("Invalid"),"Invalid user");
 	}
-	
-    @Test(enabled = true)
-	public void loginFunctionTestWithUserID(){
-		String ScessMesg = loginPage.useridlogin(prop.getProperty("username"), prop.getProperty("password"));	
-		assertEquals(ScessMesg, "Login Successfully");
+
+	@Test()
+	public void loginTechnicalTestWithInvalidpassword() {  		
+		loginPageTechnical.technicalUserEmaillogin(prop.getProperty("username"), "invalid password");
+		Assert.assertEquals(loginPageTechnical.verifyNotificationText("Invalid"),"Invalid user");
 	}
-    
-    @Test(enabled = true)
- 	public void login(){
- 		homePage = loginPage.userLogin(prop.getProperty("username"), prop.getProperty("password"));	
- 	}
 
 }

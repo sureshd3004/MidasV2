@@ -7,7 +7,7 @@ import org.openqa.selenium.support.PageFactory;
 
 import com.midas.qa.base.TestBase;
 
-public class HomePageTechnical extends TestBase {
+public class VendorRequestTechnical extends TestBase {
 
 
 	@FindBy(xpath = "//img[@id='btnSearch']")
@@ -31,7 +31,7 @@ public class HomePageTechnical extends TestBase {
 	private WebDriver driver;
 
 	// Initializing the Page Objects:
-	public HomePageTechnical() {
+	public VendorRequestTechnical() {
 		this.driver = getDriver();
 		PageFactory.initElements(driver, this);
 	}
@@ -40,7 +40,7 @@ public class HomePageTechnical extends TestBase {
 		return driver.getTitle();
 	}
 
-	public boolean validateUserName() {
+	public boolean validateUserName(){
 		return userName.getText().equalsIgnoreCase(prop.getProperty("username"));
 	}
 

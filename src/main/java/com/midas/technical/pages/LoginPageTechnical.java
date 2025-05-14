@@ -1,15 +1,17 @@
 package com.midas.technical.pages;
 
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
 import com.midas.qa.base.TestBase;
+import com.midas.qa.util.TestUtil;
 
 public class LoginPageTechnical extends TestBase{
 
 	//Page Factory - OR:
-	@FindBy(xpath="//input[@id='username']")
+	@FindBy(xpath="//input[@id='emailId']")
 	WebElement username;	
 
 	@FindBy(xpath="//input[@id='password']")
@@ -31,7 +33,7 @@ public class LoginPageTechnical extends TestBase{
 	WebElement technicalLoginOption;
 
 	@FindBy(xpath="//img[@alt='Client Logo']")
-	WebElement Logo;
+	WebElement midasLogo;
 
 	@FindBy(xpath="//img[@id='btnNew']")
 	WebElement requestIcon;
@@ -52,27 +54,22 @@ public class LoginPageTechnical extends TestBase{
 		return driver.getTitle();
 	}
 
-	public boolean validateImage(){
-		return Logo.isDisplayed();
+	public boolean validateMidasLogo(){
+		return midasLogo.isDisplayed();
 	}
 
-	public HomePageTechnical getTechnicalHomePage(String un, String pwd){
+	public void technicalUserEmaillogin(String un, String pwd) {
+		technicalLoginOption.click();
 		username.sendKeys(un);
-		password.clear();
 		password.sendKeys(pwd);
-		loginBtn.click();
-   //   return loginSucessMesg.getText();
+		loginBtn.click(); 
+	}
 	
-		return new HomePageTechnical();
-	}
+	public String verifyNotificationText(String text) {
+		return TestUtil.waitAndGetText(driver.findElement(By.xpath("//*[contains(text(),'"+text+"')]")));	
 
-	public String technicalUseridlogin(String un, String pwd) {
-		username.sendKeys(un);
-		password.clear();
-		password.sendKeys(pwd);
-		loginBtn.click();
-        return loginSucessMesg.getText();
 	}
+	
 
 
 

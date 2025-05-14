@@ -1,50 +1,112 @@
 package com.midas.qa.util;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
-import java.util.Optional;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.devtools.DevTools;
-import org.openqa.selenium.devtools.HasDevTools;
-import org.openqa.selenium.devtools.v118.performance.Performance;
-import org.openqa.selenium.devtools.v118.performance.model.Metric;
-import com.aventstack.extentreports.ExtentTest;
 import java.util.Properties;
+
+import org.openqa.selenium.WebDriver;
 import java.util.Random;
 import java.util.Set;
+import org.json.JSONObject;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.WindowType;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import com.midas.qa.base.TestBase;
-import jakarta.mail.Flags;
-import jakarta.mail.Folder;
-import jakarta.mail.Message;
-import jakarta.mail.Session;
-import jakarta.mail.Store;
-import jakarta.mail.search.FlagTerm;
+import jakarta.mail.BodyPart;
+import jakarta.mail.internet.MimeMultipart;
+import com.aventstack.extentreports.ExtentTest;
 
 public class TestUtil extends TestBase {
 
 	public static long PAGE_LOAD_TIMEOUT = 15;
+	public static String currentwindow;
 	
-	 public static void logPerformanceMetrics(WebDriver driver, ExtentTest logger) {
-	        if (!(driver instanceof HasDevTools)) return;
+	public static void logPerformanceMetrics(WebDriver driver, ExtentTest logger) {
+	    try {
+	        // Capture key navigation timings
+	        long navigationStart = (Long) js.get().executeScript("return window.performance.timing.navigationStart;");
+	        long responseStart   = (Long) js.get().executeScript("return window.performance.timing.responseStart;");
+	        long domContentLoaded = (Long) js.get().executeScript("return window.performance.timing.domContentLoadedEventEnd;");
+	        long domInteractive   = (Long) js.get().executeScript("return window.performance.timing.domInteractive;");
+	        long domComplete      = (Long) js.get().executeScript("return window.performance.timing.domComplete;");
 
-	        DevTools devTools = ((HasDevTools) driver).getDevTools();
-	        devTools.createSession();
-	        devTools.send(Performance.enable(Optional.empty()));
+	        // Individual metric calculations
+	        long domContentLoadedTime = domContentLoaded - navigationStart;     // Total DOM Load
+	        long scriptExecutionTime  = domComplete - domInteractive;           // Proxy for script execution
+	        long layoutExecutionTime  = domInteractive - responseStart;         // Proxy for layout
 
-	        List<Metric> metrics = devTools.send(Performance.getMetrics());
+	        long frontendTime = domComplete - responseStart;                    // Frontend = DOMComplete - ResponseStart
+	        long backendTime  = responseStart - navigationStart;                // Backend = ResponseStart - NavigationStart
 
-	        for (Metric metric : metrics) {
-	            String log = metric.getName() + " = " + metric.getValue();
-	            logger.info(log);
+	        // Log thresholds and status
+	        if (domContentLoadedTime > 2000) {
+	            logger.warning("⚠ DomContentLoaded exceeds threshold: " + domContentLoadedTime + " ms");
+	        } else {
+	            logger.info("✅ DomContentLoaded OK: " + domContentLoadedTime + " ms");
+	        }
+
+	        if (scriptExecutionTime > 500) {
+	            logger.warning("⚠ Script Execution exceeds threshold: " + scriptExecutionTime + " ms");
+	        } else {
+	            logger.info("✅ Script Execution is acceptable: " + scriptExecutionTime + " ms");
+	        }
+
+	        if (layoutExecutionTime > 300) {
+	            logger.warning("⚠ Layout Duration exceeds threshold: " + layoutExecutionTime + " ms");
+	        } else {
+	            logger.info("✅ Layout Duration is acceptable: " + layoutExecutionTime + " ms");
+	        }
+
+	        if (frontendTime > 2500) {
+	            logger.warning("⚠ Frontend Time exceeds threshold: " + frontendTime + " ms");
+	        } else {
+	            logger.info("✅ Frontend Time is acceptable: " + frontendTime + " ms");
+	        }
+	        if (backendTime > 2000) {
+	            logger.warning("⚠ Backend Time exceeds threshold: " + backendTime + " ms");
+	        } else {
+	            logger.info("✅ Backend Time is acceptable: " + backendTime + " ms");
+	        }
+	   
+	    } catch (Exception e) {
+	        logger.warning("❌ Error capturing page performance metrics: " + e.getMessage());
+	    }
+	}
+
+
+	 public static boolean isTokenExpired(String jwtToken) {
+	        try {
+	            String[] parts = jwtToken.split("\\.");
+	            if (parts.length < 2) return true;
+
+	            String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
+	            JSONObject json = new JSONObject(payload);
+
+	            long exp = json.getLong("exp");
+	            long now = System.currentTimeMillis() / 1000;
+
+	            return now > exp; // true = expired
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            return true; // Treat as expired if parsing fails
 	        }
 	    }
 
-	public static WebDriver switchNewWindow() {
-		String currentwindow = getDriver().getWindowHandle();
+	  public static void switchToMainWindow() {
+	        if (currentwindow != null) {
+	            driver.get().switchTo().window(currentwindow);
+	        } else {
+	            throw new IllegalStateException("Main window handle not stored. Call storeMainWindowHandle() first.");
+	        }
+	    }
+	  
+	 public static WebDriver switchNewWindow() {
+		 currentwindow = getDriver().getWindowHandle();
 		Set<String> windows = getDriver().getWindowHandles();
 		for (String windowHandle : windows) {
 			if (!windowHandle.equals(currentwindow)) {
@@ -54,56 +116,24 @@ public class TestUtil extends TestBase {
 		return getDriver();
 	}
 
-	public static String fetchLatestResetLink(String userEmail, String appPassword) {
-		try {
-			Properties props = new Properties();
-			props.put("mail.store.protocol", "imaps");
-
-			Session session = Session.getInstance(props);
-			Store store = session.getStore();
-			store.connect("imap.gmail.com", userEmail, appPassword);
-
-			Folder inbox = store.getFolder("INBOX");
-			inbox.open(Folder.READ_WRITE);
-
-			// Search for unread emails
-			Message[] messages = inbox.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false));
-
-			for (int i = messages.length - 1; i >= 0; i--) {
-				Message message = messages[i];
-				String subject = message.getSubject();
-
-				if (subject != null && subject.contains("Reset Your Password")) {
-					String content = message.getContent().toString();
-
-					// Extract the link - update regex as per your email format
-					String resetLinkRegex = "https?://\\S+reset\\S+";
-					java.util.regex.Matcher matcher = java.util.regex.Pattern.compile(resetLinkRegex).matcher(content);
-					if (matcher.find()) {
-						return matcher.group(0);
-					}
-				}
-			}
-
-			inbox.close(false);
-			store.close();
-
-		} catch (Exception e) {
-			e.printStackTrace();
+		private static String getTextFromMimeMultipart(MimeMultipart mimeMultipart) throws Exception {
+		    StringBuilder result = new StringBuilder();
+		    int count = mimeMultipart.getCount();
+		    for (int i = 0; i < count; i++) {
+		        BodyPart bodyPart = mimeMultipart.getBodyPart(i);
+		        if (bodyPart.isMimeType("text/plain")) {
+		            result.append(bodyPart.getContent());
+		        } else if (bodyPart.isMimeType("text/html")) {
+		            String html = (String) bodyPart.getContent();
+		            result.append(org.jsoup.Jsoup.parse(html).text()); // use Jsoup to convert HTML to plain text
+		        } else if (bodyPart.getContent() instanceof MimeMultipart) {
+		            result.append(getTextFromMimeMultipart((MimeMultipart) bodyPart.getContent()));
+		        }
+		    }
+		    return result.toString();
 		}
-		return null;
-	}
-	public static long pageFrontendPerformance() {
-		long responseStart = (Long) js.get().executeScript("return window.performance.timing.responseStart");
-		long domComplete   = (Long) js.get().executeScript("return window.performance.timing.domComplete");
-		return  domComplete - responseStart;
-	}
 
-	public static long pageBackendPerformance() {
-		long navigationStart = (Long) js.get().executeScript("return window.performance.timing.navigationStart");
-		long responseStart   = (Long) js.get().executeScript("return window.performance.timing.responseStart");
-		return responseStart - navigationStart;
-	}
+
 	public static void WaitAndSwitchframe(WebElement element) {
 		//	wait.get() = new WebDriverWait(getDriver(),Duration.ofSeconds(25));
 		wait.get().until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(element));
@@ -115,7 +145,7 @@ public class TestUtil extends TestBase {
 	public static void waitAndClickElement(WebElement Element) {
 		wait.get().until(ExpectedConditions.visibilityOf(Element));
 		wait.get().until(ExpectedConditions.elementToBeClickable(Element));
-		js.get().executeScript("arguments[0].click();", Element);
+		Element.click();
 	}
 
 	public static void waitforElementToLoad(WebElement element) {
@@ -123,7 +153,7 @@ public class TestUtil extends TestBase {
 	}
 
 	public static String waitAndGetAttribute(WebElement element,String attribute) {
-		return	wait.get().until(ExpectedConditions.visibilityOf(element)).getAttribute(attribute);
+		return	wait.get().until(ExpectedConditions.visibilityOf(element)).getDomAttribute(attribute);
 	}
 
 	public static void waitAndClickStaleElement(WebElement Element) {
@@ -132,13 +162,14 @@ public class TestUtil extends TestBase {
 	}
 
 	public static String waitAndGetText(WebElement Element) {
+	//	wait.get().until(ExpectedConditions.stalenessOf(Element));
 		wait.get().until(ExpectedConditions.visibilityOf(Element));
 		return Element.getText();
 	}
 
 	public static String waitAndGetInnerText(WebElement Element) {
 		wait.get().until(ExpectedConditions.visibilityOf(Element));
-		return Element.getAttribute("innerText");
+		return Element.getDomAttribute("innerText");
 	}
 
 	public static void waitToLoadAllElements(List<WebElement> Elements) {		
@@ -194,5 +225,12 @@ public class TestUtil extends TestBase {
 	public static void openNewTab(String url) {
 		getDriver().switchTo().newWindow(WindowType.TAB);		
 		getDriver().navigate().to(url);
+	}
+
+	public static void waitAndClickElementByVisualText(String input) {
+		WebElement element = wait.get().until(ExpectedConditions.visibilityOf(getDriver().findElement(By.xpath("//*[text()='"+input+"']"))));
+		wait.get().until(ExpectedConditions.elementToBeClickable(element));
+		element.click();	
+		
 	}}
 

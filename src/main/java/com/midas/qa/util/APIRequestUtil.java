@@ -36,9 +36,8 @@ public class APIRequestUtil {
                 .extract().response();
     }
     
-    public static Response sendPostWithNoToken(String url,String body) {
+    public static Response sendPost(String url,String body) {
         return given()
-              //  .header("Authorization", "Bearer " + token)
                 .header("Content-Type", "application/json")
                 .body(body)
                 .when()

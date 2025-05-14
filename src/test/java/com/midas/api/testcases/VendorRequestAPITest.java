@@ -14,7 +14,7 @@ public class VendorRequestAPITest {
 	@Test(description = "Request Creation Form submission")
 	public void testPOSTRequestCreation() {
 
-		String API_END_POINT = "Gateway/vendorservice/request/create_vendor_request";	
+		String API_END_POINT = "vendorservice/request/create_vendor_request";	
 		String access = FileUtil.getValueFromJsonFile("accessToken");
 
 		String payload = "{\r\n"
@@ -149,7 +149,9 @@ public class VendorRequestAPITest {
 	
 	@Test(description = "DELETE Request Temp")
 	public void testDELETERequestPermanent() {
-		String API_END_POINT = "vendor/api/request/remove_vendor_request?VendorRequestCreationID=2&DeletionType=Permanent";	
+				
+		int VendorRequestCreationID = 1;
+		String API_END_POINT = "vendor/api/request/remove_vendor_request?VendorRequestCreationID="+VendorRequestCreationID +"&DeletionType=Permanent";	
 		String access = FileUtil.getValueFromJsonFile("accessToken");
 
 		Response response = com.midas.qa.util.APIRequestUtil.sendDelete(API_URI + API_END_POINT, access);

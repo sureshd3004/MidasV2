@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite thread-count="2" parallel="methods" name="TechnicalUser">
+  <test name="TechnicalUser">
+   <parameter name="role" value="technical" />
+    <classes>
+   
+      <class name="com.midas.technical.testcases.TechnicalLoginPageTest"/>
+
+    </classes>
+  </test >
+</suite> <!-- TechnicalUser -->

@@ -25,8 +25,9 @@ public class ExtentManager extends TestBase{
 			extent.setSystemInfo("Java Version", System.getProperty("java.version"));
 			extent.setSystemInfo("User Name", System.getProperty("user.name"));
 			extent.setSystemInfo("Test Environment", prop.getProperty("url"));
-			extent.setSystemInfo("Selenium Version", "4.14.0");
+			extent.setSystemInfo("Selenium Version", "4.29.0");
 			extent.setSystemInfo("Divice Type", prop.getProperty("device.mode"));
+			extent.setSystemInfo("Browser", prop.getProperty("browser"));
 
 			// Configure report appearance
 			sparkReporter.config().setReportName("Automation Test Report");

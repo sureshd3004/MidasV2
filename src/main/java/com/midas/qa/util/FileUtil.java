@@ -15,8 +15,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
+
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -33,10 +36,28 @@ public class FileUtil extends TestBase {
 
 	static String currentDir = System.getProperty("user.dir");
 	public static String TESTDATA_SHEET_PATH = currentDir+ "/src/main/java/com/midas/qa/testdata/Data.xlsx";
-
+	   static String filePath = System.getProperty("user.dir") + "/src/main/resources/config.properties";
 	static Workbook book;
 	static Sheet sheet;
 
+	public static void writeDataToProperties(String key, String value) {
+	    Properties props = new Properties();
+	 
+	    try (FileInputStream input = new FileInputStream(filePath)) {
+	        // Load existing properties
+	        props.load(input);
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	    }
+
+	    try (FileOutputStream output = new FileOutputStream(filePath)) {
+	        // Set the new key-value pair
+	        props.setProperty(key, value);
+	        props.store(output, "Updated " + key);
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	    }
+	}
 
 	public static List<String> readAllLinesFrom(String filePath) throws IOException {
 		List<String> lines = new ArrayList<>();
@@ -58,7 +79,7 @@ public class FileUtil extends TestBase {
 			return null;
 		}
 	}
-	
+
 	public static void saveJsonToFile(String json) {
 		try (FileWriter file = new FileWriter(currentDir+"/JsonFiles/Json.json")) {
 			file.write(json);
@@ -66,7 +87,7 @@ public class FileUtil extends TestBase {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public static void logDataInTxt(String injection,Response response , String fileName) throws IOException {
 		String timestamp = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
 		FileWriter writer = new FileWriter(currentDir+"/TXT/" + fileName + timestamp, true);
@@ -76,8 +97,8 @@ public class FileUtil extends TestBase {
 				"Response Body: \n" + response.getBody().asString() + "\n";
 
 		// Write log entry into file
-		 writer.write(logEntry);
-		 writer.close();
+		writer.write(logEntry);
+		writer.close();
 	}
 	public static Object[][] getTestDataBasedColoumn(String sheetName, String targetRole) throws IOException {
 		FileInputStream file = new FileInputStream(TESTDATA_SHEET_PATH);
@@ -108,7 +129,7 @@ public class FileUtil extends TestBase {
 			if (role.equalsIgnoreCase(targetRole)) {
 				String userName = row.getCell(1).getStringCellValue();
 				String password = row.getCell(2).getStringCellValue();
-			
+
 				filteredData.add(new Object[]{userName, password}); 
 				break;
 			}
@@ -117,6 +138,7 @@ public class FileUtil extends TestBase {
 		file.close();
 		return filteredData.toArray(new Object[0][]);
 	}
+
 	public static Object readColumnLastData(String sheetName, String columnName) {
 		Object lastValue = null;
 		FileInputStream fis = null;
@@ -223,11 +245,11 @@ public class FileUtil extends TestBase {
 	private static Object getCellValue(Cell cell) {
 		if (cell == null) return "";
 		switch (cell.getCellType()) {
-			case STRING: return cell.getStringCellValue();
-			case NUMERIC: return DateUtil.isCellDateFormatted(cell) ? cell.getDateCellValue() : cell.getNumericCellValue();
-			case BOOLEAN: return cell.getBooleanCellValue();
-			case FORMULA: return cell.getCellFormula();
-			default: return "";
+		case STRING: return cell.getStringCellValue();
+		case NUMERIC: return DateUtil.isCellDateFormatted(cell) ? cell.getDateCellValue() : cell.getNumericCellValue();
+		case BOOLEAN: return cell.getBooleanCellValue();
+		case FORMULA: return cell.getCellFormula();
+		default: return "";
 		}
 	}
 
@@ -246,7 +268,7 @@ public class FileUtil extends TestBase {
 		return columnData.toArray();
 	}
 
-	public static Object[] getRowDataByFirstColumnValue(String sheetName, String firstColumnValue) {
+	public static Object[] getRowDataByFirstColumnValues(String sheetName, String firstColumnValue) {
 		try (XSSFWorkbook workbook = new XSSFWorkbook(new FileInputStream(TESTDATA_SHEET_PATH))) {
 			Sheet sheet = workbook.getSheet(sheetName);
 			for (Row row : sheet) {
@@ -263,23 +285,19 @@ public class FileUtil extends TestBase {
 		}
 		return new Object[0];
 	}
-        
-	public static Object[][] getTestData(String testCaseName) {
-		List<Object[]> dataList = new ArrayList<>();
 
+	public static Object[][] getTestData(String ShetName, String columnHeader) {
+		List<Object[]> dataList = new ArrayList<>();
 		try (FileInputStream file = new FileInputStream(new File(TESTDATA_SHEET_PATH));
 				Workbook workbook = new XSSFWorkbook(file)) {
-
-			Sheet sheet = workbook.getSheetAt(0); // Assuming data is in the first sheet
+			Sheet sheet = workbook.getSheet(ShetName); 
 			Iterator<Row> rowIterator = sheet.iterator();
-
 			while (rowIterator.hasNext()) {
 				Row row = rowIterator.next();
 				Cell testCaseCell = row.getCell(0);
 
-				if (testCaseCell != null && testCaseCell.getStringCellValue().equalsIgnoreCase(testCaseName)) {
+				if (testCaseCell != null && testCaseCell.getStringCellValue().equalsIgnoreCase(columnHeader)) {
 					int totalColumns = row.getLastCellNum(); // Get total columns
-
 					// Convert row data to Object array
 					List<Object> rowData = new ArrayList<>();
 					for (int i = 1; i < totalColumns; i++) {
@@ -295,6 +313,7 @@ public class FileUtil extends TestBase {
 
 		return dataList.toArray(new Object[0][0]);
 	}
+
 	public static Object[][] getTestData2Array(String sheetName) {
 		FileInputStream file = null;
 		try {
@@ -318,21 +337,58 @@ public class FileUtil extends TestBase {
 		}
 		return data;
 	}
+
 	public static void sendValueToExcel(String sheetName, String columnHeader, String value) {
 		try (FileInputStream fis = new FileInputStream(TESTDATA_SHEET_PATH);
-				 XSSFWorkbook workbook = new XSSFWorkbook(fis)) {
+				XSSFWorkbook workbook = new XSSFWorkbook(fis)) {
 
-				Sheet sheet = workbook.getSheet(sheetName);
-				int colIndex = getColumnIndex(sheet, columnHeader);
-				int lastRow = sheet.getLastRowNum() + 1;
-				Row newRow = sheet.createRow(lastRow);
-				newRow.createCell(colIndex).setCellValue(value);
+			Sheet sheet = workbook.getSheet(sheetName);
+			int colIndex = getColumnIndex(sheet, columnHeader);
+			int lastRow = sheet.getLastRowNum() + 1;
+			Row newRow = sheet.createRow(lastRow);
+			newRow.createCell(colIndex).setCellValue(value);
 
-				try (FileOutputStream fos = new FileOutputStream(TESTDATA_SHEET_PATH)) {
-					workbook.write(fos);
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
+			try (FileOutputStream fos = new FileOutputStream(TESTDATA_SHEET_PATH)) {
+				workbook.write(fos);
 			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
+
+	public static Object[][] getDataBasedOnColumnAvalues(String sheetName, String columnAValue) {
+	    try {
+	        FileInputStream file = new FileInputStream(new File(TESTDATA_SHEET_PATH));
+	        Workbook workbook = new XSSFWorkbook(file);
+	        Sheet sheet = workbook.getSheet(sheetName);
+	        DataFormatter formatter = new DataFormatter(); // ✅ Formatter to preserve cell format
+
+	        List<Object[]> data = new ArrayList<>();
+
+	        for (Row row : sheet) {
+	            Cell keyCell = row.getCell(0); // Column A
+	            if (keyCell != null && keyCell.getCellType() == CellType.STRING &&
+	                keyCell.getStringCellValue().equalsIgnoreCase(columnAValue)) {
+	                
+	                int lastCellNum = row.getLastCellNum(); // Total columns in the row
+	                Object[] rowData = new Object[lastCellNum - 1]; // Exclude column A
+
+	                for (int i = 1; i < lastCellNum; i++) { // Start from column B
+	                    Cell cell = row.getCell(i);
+	                    rowData[i - 1] = (cell != null) ? formatter.formatCellValue(cell).trim() : "";
+	                }
+	                data.add(rowData);
+	            }
+	        }
+	        workbook.close();
+	        file.close(); // Close file stream too
+	        return data.toArray(new Object[0][0]);
+
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        return new Object[0][0];
+	    }
+	}
+
+
 }
