@@ -86,13 +86,6 @@ public class CustomWebDriverListener implements WebDriverListener {
 		Log.info("About to submit: " + element);
 	}
 
-	@Override
-	public void afterAlert(WebDriver.TargetLocator targetLocator, Alert alert) {
-		String tc = TestBase.testCaseName.get();
-		ScreenshotUtil.captureScreenshot(TestBase.getDriver(), tc, "afterAlertAccept");
-		Log.info("After alert with text: " + alert.getText());
-	}
-
 	/*	public void beforeAlertDismiss(WebDriver driver) {
 	//	Log.info("Before dismissing alert.");
 		String testCaseName = TestBase.testCaseName.get();
